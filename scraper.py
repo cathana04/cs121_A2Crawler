@@ -4,7 +4,7 @@ from urllib.parse import urlparse, unparse
 from bs4 import BeautifulSoup
 import shelve
 
-# git logs
+# git log
 # Added HTML parsing of url content, url defragment + assembly, and additional conditions in url validation.
 # Added tokenizer, token dictionary creation, basic low/high info checks, and calendar check in is_valid()
 
