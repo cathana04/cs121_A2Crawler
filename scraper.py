@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, unparse
+from urllib.parse import urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 import shelve
@@ -8,13 +8,16 @@ import shelve
 # Added HTML parsing of url content, url defragment + assembly, and additional conditions in url validation.
 # Added tokenizer, token dictionary creation, basic low/high info checks, and calendar check in is_valid()
 
+# stopword list
+stopwords = []
+
 def scraper(url, resp):
     # links = extract_next_links(url, resp)
     links = []
 
     if resp:
         # if valid status code returned (URL can be parsed),
-        # check if robots.txt file allows scraping
+        # check if robots.txt file allows scraping (EC)
 
         # get HTML content from current link
         url_html = BeautifulSoup(resp.raw_response.content, 'html.parser')
@@ -30,20 +33,37 @@ def scraper(url, resp):
         if (len(token_dict) < 500) or (len(token_dict) > 50000):
             return links
         
-        # check for near-duplicate pages
+        # check for near-duplicate pages (EC)
 
         # else, get URLs from all hyperlinks:
         # access 'href' (full link)
         links = [link.get('href') for link in url_html.find_all('a')]
 
         # and shelve current URL data (token_dict)
+        with shelve.open("sitedata") as site_shelf:
+            
+            # add URL and its token dict
+            site_shelf[url] = token_dict
+
+            # get current shelf data
+            curr_stats = {"longest_page": (0, "NULL"),}
+            if "stats" in site_shelf:
+                curr_stats = site_shelf["stats"]
+
+            # edit longest page record
+            if len(tokens) > curr_stats["longest_page"][0]:
+                curr_stats["longest_page"][0] = len(tokens)
+                curr_stats["longest_page"][1] = url
+
+            # put data back
+            site_shelf["stats"] = curr_stats
 
     else:
         print("URL could not be parsed due to error status code", resp.status)
     
     # return scraped URLs as long as they are validated
     # defragment and reassemble each URL
-    return [unparse((urlparse(link))._replace(fragment="")) for link in links if is_valid(link)]
+    return [urlunparse((urlparse(link))._replace(fragment="")) for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -132,4 +152,26 @@ def compute_token_freq(tokens:list) -> dict:
 
     return freq_dict
 
-def edit_report():
+def common_word_count(frequencies:dict):
+    filtered_tokens = {}
+
+    for token, freq in frequencies.items():
+        if not (token in stopwords):
+            filtered_tokens[token] = freq
+
+    freqlist = frequency_sort(filtered_tokens)
+
+def frequency_sort(frequencies:dict):
+    """Sort a dictionary of token:freq pairs by descending frequency + alphabetically to break ties. 
+       Returns a list of tuples (freq, token)."""
+    
+    freqlist = []
+    # create tuples (frequency, token) of each token:frequency pair
+    for word, freq in frequencies.items():
+        freqlist.append(tuple([freq, word]))
+    
+    # sort list of tuples
+    freqlist_sort1 = sorted(freqlist)
+    freqlist_sorted = sorted(freqlist_sort1, key = lambda tk: tk[0], reverse = True)
+
+    return freqlist_sorted
