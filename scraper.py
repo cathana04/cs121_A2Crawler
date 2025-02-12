@@ -28,6 +28,11 @@ def scraper(url, resp):
 
         url_html = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
+        # check meta tags, see if page allows scraping
+        metatag = url_html.find('meta', attrs={"name":"robots", "content":"noindex"})
+        if metatag:
+            return links
+
         # tokenize text
         url_text = url_html.get_text()
         tokens = tokenize(url_text)
@@ -133,8 +138,8 @@ def is_valid(url):
             # par.write("domain check failed.\n")
             # par.close()
             return False
-        # check for calendar format in URL (YYYY-MM-DD) and (YYYY-MM)
-        if re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.path):
+        # check for calendar format in URL path OR query (YYYY-MM-DD) and (YYYY-MM)
+        if re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.path) or re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.query):
             # par.write("calendar check failed.\n")
             # par.close()
             return False
