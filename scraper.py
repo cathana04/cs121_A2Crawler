@@ -37,8 +37,8 @@ def scraper(url, resp):
 
         # check for low-info (lower bound) + high info (upper bound)
         # if num of UNIQUE tokens < 100, page is too low-info
-        # if num of UNIQUE tokens > 10,000, page is too high-info
-        if (len(token_dict) < 100) or (len(token_dict) > 10000):
+        # if num of UNIQUE tokens > 1,000, page is too high-info
+        if (len(token_dict) < 100) or (len(token_dict) > 1000):
             print("bounds reached")
             return links
         
