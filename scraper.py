@@ -19,7 +19,7 @@ def scraper(url, resp):
     if resp:
         # if valid status code returned (URL can be parsed),
         # check if robots.txt file allows scraping (EC)
-        print("STATUS:", resp.status) DEBUG
+        print("STATUS:", resp.status) # DEBUG
         # get HTML content from current link
         url_html = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
@@ -123,7 +123,8 @@ def is_valid(url):
             return False
         # check for valid domain
         if not re.match(
-            r".*ics|.*stat|.*informatics|.*cs" + r"uci.edu$", parsed.netloc.lower()):
+            # r".*ics|.*stat|.*informatics|.*cs" + r"uci.edu$", parsed.netloc.lower()):
+            r".*(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
             # par.write("domain check failed.\n")
             # par.close()
             return False
