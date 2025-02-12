@@ -16,11 +16,16 @@ def scraper(url, resp):
     links = []
     print("scraping", url)
 
-    if resp:
+    if (resp.status >= 200) and (resp.status <= 399):
         # if valid status code returned (URL can be parsed),
         # check if robots.txt file allows scraping (EC)
         print("STATUS:", resp.status) # DEBUG
+
         # get HTML content from current link
+        if not resp.raw_response:
+            print("Empty page. Scraping for this URL canceled")
+            return links
+
         url_html = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
         # tokenize text
@@ -71,7 +76,7 @@ def scraper(url, resp):
             site_shelf["stats"] = curr_stats
 
     else:
-        print("URL could not be parsed due to error status code", resp.status)
+        print("URL could not be parsed due to bad status code: ", resp.status)
     
     # return scraped URLs as long as they are validated
     # defragment and reassemble each URL
@@ -128,8 +133,8 @@ def is_valid(url):
             # par.write("domain check failed.\n")
             # par.close()
             return False
-        # check for calendar format in URL (YYYY-MM-DD)
-        if re.match(r".*[0-9]{4}-[0-9]{2}-[0-9]{2}.*", urlunparse(parsed)):
+        # check for calendar format in URL (YYYY-MM-DD) and (YYYY-MM)
+        if re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.path):
             # par.write("calendar check failed.\n")
             # par.close()
             return False
