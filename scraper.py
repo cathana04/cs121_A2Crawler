@@ -51,7 +51,8 @@ def scraper(url, resp):
 
         # else, get URLs from all hyperlinks:
         # access 'href' (full link)
-        links = [link.get('href') for link in url_html.find_all('a')]
+        # links = [link.get('href') for link in url_html.find_all('a')] # OLD
+        links = [link.get('href') for link in url_html.find_all('a') if link.get('rel') != 'nofollow']
         
         #with open('linkinfo.txt', 'a') as d:
             #d.write(url)
@@ -106,15 +107,7 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
 
-        #par = open("parsing.txt", 'a') # DEBUG
-        #if parsed:
-            #par.write("PARSED URL: ")# DEBUG
-            #par.write(str(parsed))
-            #par.write('\n')
-
         if parsed.scheme not in set(["http", "https"]):
-            # par.write("failed scheme check.\n")
-            # par.close()
             return False
         # return not re.match(
         # check for non-website URLS
