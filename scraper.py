@@ -146,6 +146,9 @@ def is_valid(url):
         # block pages that have a search bar + applicable filters
         if "filter" in parsed.query:
             return False
+        # block pages that have a login
+        if "login" in parsed.path:
+            return False
 
         # all filters passed
         # par.write("link passes.\n")
