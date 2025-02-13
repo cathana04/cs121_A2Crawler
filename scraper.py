@@ -134,7 +134,7 @@ def is_valid(url):
         # check for valid domain
         if not re.match(
             # r".*ics|.*stat|.*informatics|.*cs" + r"uci.edu$", parsed.netloc.lower()):
-            r".*(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
+            r".*\.(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
             # par.write("domain check failed.\n")
             # par.close()
             return False
@@ -142,6 +142,9 @@ def is_valid(url):
         if re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.path) or re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.query):
             # par.write("calendar check failed.\n")
             # par.close()
+            return False
+        # block pages that have a search bar + applicable filters
+        if "filter" in parsed.query:
             return False
 
         # all filters passed
