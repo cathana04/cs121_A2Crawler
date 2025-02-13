@@ -127,7 +127,8 @@ def is_valid(url):
         # check for valid domain
         if not re.match(
             # r".*ics|.*stat|.*informatics|.*cs" + r"uci.edu$", parsed.netloc.lower()):
-            r".*\.(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
+            #r".*\.(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
+            r"(.*\.)?(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
             # par.write("domain check failed.\n")
             # par.close()
             return False
