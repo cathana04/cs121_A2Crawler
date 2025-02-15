@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, robotparser
 
 from bs4 import BeautifulSoup
 import shelve
@@ -44,7 +44,6 @@ def scraper(url, resp):
         # if num of UNIQUE tokens < 100, page is too low-info
         # if num of UNIQUE tokens > 1,000, page is too high-info
         if (len(token_dict) < 100) or (len(token_dict) > 1000):
-            print("bounds reached")
             return links
         
         # check for near-duplicate pages (EC)
@@ -78,8 +77,15 @@ def scraper(url, resp):
                 newstats = (len(tokens), url)
                 curr_stats["longest_page"] = newstats
 
+            # get current token:frequency dict for all pages
+            # and update the dict's frequency total
+            all_tokens = token_dict
+            if "tokendict" in site_shelf:
+                all_tokens = update_tkdict(site_shelf["tokendict"], token_dict)
+
             # put data back
             site_shelf["stats"] = curr_stats
+            site_shelf["tokendict"] = all_tokens
 
     else:
         print("URL could not be parsed due to bad status code: ", resp.status)
@@ -212,3 +218,13 @@ def frequency_sort(frequencies:dict):
     freqlist_sorted = sorted(freqlist_sort1, key = lambda tk: tk[0], reverse = True)
 
     return freqlist_sorted
+
+def update_tkdict(main_dict, add_dict)->dict:
+    """Combine two token dictionaries and their token frequencies."""
+    for token, freq in add_dict.items():
+        if token in main_dict:
+            main_dict[token] = main_dict[token] + freq
+        else:
+            main_dict[token] = freq
+
+    return main_dict
