@@ -1,26 +1,37 @@
 import re
-from urllib.parse import urlparse, urlunparse, robotparser
+from urllib.parse import urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 import shelve
 
-# git log
-# Added HTML parsing of url content, url defragment + assembly, and additional conditions in url validation.
-# Added tokenizer, token dictionary creation, basic low/high info checks, and calendar check in is_valid()
-
-# stopword list
-stopwords = []
+stopwords = ["a", "about", "above", "after", "again", "against", "all",
+            "am", "an", "and", "any", "are", "aren\'t", "as", "at", "be",
+            "because", "been", "before", "being", "below", "between", "both",
+            "but", "by","can\'t","cannot", "could", "couldn\'t", "did",
+            "didn\'t", "do", "does", "doesn\'t", "doing", "don\'t", "down",
+            "during", "each", "few", "for", "from", "further", "had", "hadn\'t",
+            "has","hasn\'t","have", "haven\'t", "having","he","he\'d","he\'ll",
+            "he\'s", "her", "here", "here\'s", "hers", "herself", "him", "himself",
+            "his", "how","how\'s", "i", "i\'d", "i\'ll", "i\'m", "i\'ve", "if",
+            "in", "into", "is", "isn\'t", "it", "it\'s", "its", "itself",
+            "let\'s", "me", "more", "most", "mustn\'t", "my", "myself", "no",
+            "nor", "not", "of", "off", "on", "once", "only", "or", "other",
+            "ought", "our", "ours", 'ourselves', 'out', 'over', 'own', 'same', 
+            "shan't", 'she', "she'd", "she'll", "she's", 'should', "shouldn't", 
+            'so', 'some', 'such', 'than', 'that', "that's", 'the', 'their', 
+            'theirs', 'them', 'themselves', 'then', 'there', "there's", 'these', 
+            'they', "they'd", "they'll", "they're", "they've", 'this', 'those', 
+            'through', 'to', 'too', 'under', 'until', 'up', 'very', 'was', "wasn't", 
+            'we', "we'd", "we'll", "we're", "we've", 'were', "weren't", 'what', "what's", 
+            'when', "when's", 'where', "where's", 'which', 'while', 'who', "who's",
+            'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you',
+            "you'd", "you'll", "you're", "you've", 'your', 'yours', 'yourself', 'yourselves']
 
 def scraper(url, resp):
-    # links = extract_next_links(url, resp)
-    links = []
-    print("scraping", url)
+    links = extract_next_links(url, resp)
 
     if (resp.status >= 200) and (resp.status <= 399):
-        # if valid status code returned (URL can be parsed),
-        # check if robots.txt file allows scraping (EC)
-        print("STATUS:", resp.status) # DEBUG
-
+        # if valid status code returned (URL can be parsed)
         # get HTML content from current link
         if not resp.raw_response:
             print("Empty page. Scraping for this URL canceled")
@@ -38,28 +49,15 @@ def scraper(url, resp):
         tokens = tokenize(url_text)
         token_dict = compute_token_freq(tokens)
 
-        print("unique token count:", len(token_dict)) # DEBUG
-
         # check for low-info (lower bound) + high info (upper bound)
         # if num of UNIQUE tokens < 100, page is too low-info
         # if num of UNIQUE tokens > 1,000, page is too high-info
         if (len(token_dict) < 100) or (len(token_dict) > 1000):
             return links
-        
-        # check for near-duplicate pages (EC)
 
         # else, get URLs from all hyperlinks:
         # access 'href' (full link)
-        # links = [link.get('href') for link in url_html.find_all('a')] # OLD
         links = [link.get('href') for link in url_html.find_all('a') if link.get('rel') != 'nofollow']
-        
-        #with open('linkinfo.txt', 'a') as d:
-            #d.write(url)
-            #d.write(" GENERATED THE FOLLOWING: ---------------------\n")
-            #for link in links:
-                #if link:
-                    #d.write(link)
-                    #d.write('\n')
 
         # and shelve current URL data (token_dict)
         with shelve.open("sitedata") as site_shelf:
@@ -115,7 +113,6 @@ def is_valid(url):
 
         if parsed.scheme not in set(["http", "https"]):
             return False
-        # return not re.match(
         # check for non-website URLS
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -126,22 +123,12 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv|xml"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
-            # xml bad.
-            # par.write("path check failed.\n")
-            # par.close()
             return False
         # check for valid domain
-        if not re.match(
-            # r".*ics|.*stat|.*informatics|.*cs" + r"uci.edu$", parsed.netloc.lower()):
-            #r".*\.(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
-            r"(.*\.)?(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
-            # par.write("domain check failed.\n")
-            # par.close()
+        if not re.match(r"(.*\.)?(ics|stat|informatics|cs)+(.uci.edu)$", parsed.netloc.lower()):
             return False
         # check for calendar format in URL path OR query (YYYY-MM-DD) and (YYYY-MM)
         if re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.path) or re.match(r".*[0-9]{4}-[0-9]{2}(-[0-9]{2})?.*", parsed.query):
-            # par.write("calendar check failed.\n")
-            # par.close()
             return False
         # block pages that have a search bar + applicable filters
         if "filter" in parsed.query:
@@ -151,8 +138,6 @@ def is_valid(url):
             return False
 
         # all filters passed
-        # par.write("link passes.\n")
-        # par.close()
         return True
 
     except TypeError:
@@ -196,6 +181,7 @@ def compute_token_freq(tokens:list) -> dict:
     return freq_dict
 
 def common_word_count(frequencies:dict):
+    
     filtered_tokens = {}
 
     for token, freq in frequencies.items():
@@ -224,7 +210,7 @@ def update_tkdict(main_dict, add_dict)->dict:
     for token, freq in add_dict.items():
         if token in main_dict:
             main_dict[token] = main_dict[token] + freq
-        else:
+        elif not(token in stopwords):
             main_dict[token] = freq
 
     return main_dict
